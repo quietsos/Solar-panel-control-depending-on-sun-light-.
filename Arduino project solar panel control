@@ -1,0 +1,136 @@
+// Solar panel controle depending on sun light density
+#include<Servo.h>
+int P[5];
+const int x=10,y=9;
+const int sensor=A0;
+int value[5],Xangle=90,Yangle=90;
+Servo servohori,servoverti;
+void InitiatePins(void);
+void rotateX(int angle);
+void rotateY(int angle);
+void senceValues(void);
+int servov = 0; 
+int servoh = 0;
+int servohLimitHigh = 160;
+int servohLimitLow = 10;
+int servovLimitHigh = 160;
+int servovLimitLow = 10;
+
+  int avgtop; //average of top LDRs
+  int avgbot ; //average of bottom LDRs
+  int avgleft ; //average of left LDRs
+  int avgright; //average of right LDRs
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  InitiatePins();
+  servohori.attach(10);
+  servohori.write(90);
+  servoverti.attach(9);
+  servoverti.write(90);
+  delay(4000);
+  //digitalWrite(servoXPower,LOW);
+  //digitalWrite(servoYPower,LOW);  
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  //if(Serial.available()>0)
+  delay(50);
+//  servoh = servohori.read();
+//  servov = servoverti.read();
+  senceValues();
+  avgtop = (value[3] + value[4]) / 2; //average of top LDRs
+  avgbot = (value[1] + value[2]) / 2; //average of bottom LDRs
+  avgleft = (value[2] + value[3]) / 2; //average of left LDRs
+  avgright = (value[1] + value[4]) / 2; //average of right LDRs
+  Serial.print(avgtop);
+  Serial.print(" |");
+  Serial.print(servoh);
+  Serial.print("| ");
+  Serial.println(avgbot);
+  Serial.print(avgleft);
+  Serial.print(" |");
+  Serial.print(servov);
+  Serial.print("| ");
+  Serial.println(avgright);
+  if(abs(avgtop-avgbot)>7)
+  {
+    if (avgtop < avgbot)
+    {
+      
+      servov++;
+      if (servov > servovLimitHigh) 
+       { 
+        servov = servovLimitHigh;
+       }
+//      if(servov%5==0)
+        servoverti.write(servov);
+      delay(10);
+    }
+    else if (avgbot < avgtop)
+    {
+      servov--;
+      if (servov < servovLimitLow)
+      {
+      servov = servovLimitLow;
+      }
+//      if(servov%5==0)
+        servoverti.write(servov);
+      delay(10);
+    }
+    else 
+    {
+      servoverti.write(servov);
+    }
+  }
+  if(abs(avgleft-avgright)>7)
+  {
+    if (avgleft > avgright)
+    {
+      servoh++;
+      if (servoh > servohLimitHigh)
+      {
+      servoh = servohLimitHigh;
+      }
+//      if(servoh%5==0)
+        servohori.write(servoh);
+      delay(10);
+    }
+    else if (avgright > avgleft)
+    {
+      servoh--;
+      if (servoh < servohLimitLow)
+       {
+       servoh = servohLimitLow;
+       }
+//       if(servoh%5==0)
+        servohori.write(servoh);
+      delay(10);
+    }
+    else 
+    {
+      servohori.write(servoh);
+    }
+  }
+  delay(10);
+}
+  
+
+void senceValues(void)
+{
+  for(int i=1;i<5;++i)
+  {
+    digitalWrite(P[i],HIGH);
+    value[i] = analogRead(sensor);
+    digitalWrite(P[i],LOW);
+  }
+}
+
+void InitiatePins(void)
+{
+  for (int i=1;i<5;++i)
+    P[i] = i+1;
+  for (int i=1;i<5;++i)
+    pinMode(P[i],OUTPUT);
+}
